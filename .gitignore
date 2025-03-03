@@ -1,0 +1,7 @@
+# Ignore Xcode user-specific files
+*.xcuserstate
+xcuserdata/
+*.xcworkspace
+DerivedData/
+
+
