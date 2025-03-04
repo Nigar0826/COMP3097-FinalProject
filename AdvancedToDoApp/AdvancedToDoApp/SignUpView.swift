@@ -12,14 +12,19 @@ struct SignUpView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var agreedToTerms = false
+    @State private var showError = false
+    @State private var errorMessage = ""
     
+    // For Navigation
+    @Environment(\.presentationMode) var presentationMode
+
     var body: some View {
         ZStack {
-            Color.black.edgesIgnoringSafeArea(.all) 
+            Color.black.edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 20) {
                 // App Title
-                Text("ADVANCED TO DO APP")
+                Text("🚀 ADVANCED TO DO APP")
                     .foregroundColor(.white)
                     .font(.headline)
                     .padding(.top, 10)
@@ -31,29 +36,42 @@ struct SignUpView: View {
                     .foregroundColor(.white)
                 
                 // Input fields
-                CustomTextField(icon: "person.fill", placeholder: "Full Name", text: $fullName)
-                CustomTextField(icon: "envelope.fill", placeholder: "Email Address", text: $email)
-                CustomTextField(icon: "lock.fill", placeholder: "Password", text: $password, isSecure: true)
+                CustomInputField(icon: "person.fill", placeholder: "Full Name", text: $fullName)
+                CustomInputField(icon: "envelope.fill", placeholder: "Email Address", text: $email)
+                CustomInputField(icon: "lock.fill", placeholder: "Password", text: $password, isSecure: true)
                 
                 // Terms & Conditions Toggle
                 Toggle(isOn: $agreedToTerms) {
-                    Text("I have read & agreed to Privacy Policy, Terms & Conditions")
-                        .foregroundColor(Color.yellow)
+                    Text("I agree to the Privacy Policy & Terms")
+                        .foregroundColor(.yellow)
                         .font(.system(size: 14))
                 }
                 .padding(.horizontal)
                 .toggleStyle(SwitchToggleStyle(tint: Color.yellow))
                 
+                // Error Message Display
+                if showError {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .font(.system(size: 14))
+                        .padding(.top, -10)
+                        .transition(.opacity)
+                }
+
                 // Sign-up Button
-                Button(action: {}) {
-                    Text("Sign Up")
+                Button(action: {
+                    handleSignUp()
+                }) {
+                    Text("Sign Up 🎉")
                         .frame(maxWidth: .infinity, minHeight: 50)
                         .background(Color.yellow)
                         .foregroundColor(.black)
                         .cornerRadius(10)
                         .font(.headline)
                         .padding(.horizontal)
+                        .shadow(radius: 5)
                 }
+                .animation(.easeInOut, value: showError)
                 
                 // Divider with "Or continue with"
                 HStack {
@@ -70,7 +88,9 @@ struct SignUpView: View {
                 .padding(.horizontal)
                 
                 // Apple Sign-In Button
-                Button(action: {}) {
+                Button(action: {
+                    print("Apple Sign-In Clicked 🍏")
+                }) {
                     HStack {
                         Image(systemName: "applelogo")
                         Text("Sign in with Apple")
@@ -81,6 +101,7 @@ struct SignUpView: View {
                     .cornerRadius(10)
                     .font(.headline)
                     .padding(.horizontal)
+                    .shadow(radius: 5)
                 }
                 
                 // Navigation to Login
@@ -90,7 +111,7 @@ struct SignUpView: View {
                     
                     NavigationLink(destination: LoginView()) {
                         Text("Log In")
-                            .foregroundColor(Color.yellow)
+                            .foregroundColor(.yellow)
                             .fontWeight(.bold)
                     }
                 }
@@ -99,9 +120,30 @@ struct SignUpView: View {
             .padding()
         }
     }
+    
+    // MARK: - Sign Up Handler (Now Navigates to Login)
+    func handleSignUp() {
+        withAnimation {
+            if fullName.isEmpty || email.isEmpty || password.isEmpty {
+                showError = true
+                errorMessage = "⚠️ Please fill all fields!"
+            } else if !agreedToTerms {
+                showError = true
+                errorMessage = "⚠️ You must accept the terms!"
+            } else {
+                showError = false
+                print("✅ Sign Up Successful for \(fullName)")
+                
+                // ✅ Navigate to Login Screen after sign-up
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    self.presentationMode.wrappedValue.dismiss()
+                }
+            }
+        }
+    }
 }
 
-// Reusable Input Field Component
+// MARK: - Reusable Input Field Component
 struct CustomInputField: View {
     var icon: String
     var placeholder: String
@@ -136,7 +178,7 @@ struct CustomInputField: View {
     }
 }
 
-// Preview
+// MARK: - Preview
 struct SignUpView_Previews: PreviewProvider {
     static var previews: some View {
         SignUpView()
