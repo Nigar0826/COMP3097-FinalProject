@@ -7,34 +7,48 @@
 
 import SwiftUI
 
-// Launch Screen
 struct LaunchView: View {
     var body: some View {
         NavigationView {
             VStack {
-                // App Title
-                Text("Advanced To-Do App")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .padding()
+                // App title
+                Text("ADVANCED TO DO")
+                    .foregroundColor(.white)
+                    .font(.headline)
+                    .padding(.top, 40)
 
-                // Navigation button to go to LoginView
+                Spacer()
+
+                // App tagline
+                Text("MANAGE YOUR TASK")
+                    .foregroundColor(.white)
+                    .font(.title)
+                    .bold()
+                    .padding(.bottom, 10)
+
+                // Security Assurance
+                Text("SAFE & SECURE")
+                    .foregroundColor(Color.yellow)
+                    .font(.title2)
+                    .bold()
+                    .padding(.bottom, 40)
+
+                // Navigation to Login Screen
                 NavigationLink(destination: LoginView()) {
-                    Text("Get Started")
-                        .frame(width: 200, height: 50)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
+                    Text("Let's Start")
+                        .frame(width: 250, height: 50)
+                        .background(Color.yellow)
+                        .foregroundColor(.black)
                         .cornerRadius(10)
                 }
-                .padding()
+                .padding(.bottom, 50)
+
+                Spacer()
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.black) 
+            .ignoresSafeArea()
         }
     }
 }
 
-// Preview
-struct LaunchView_Previews: PreviewProvider {
-    static var previews: some View {
-        LaunchView()
-    }
-}
