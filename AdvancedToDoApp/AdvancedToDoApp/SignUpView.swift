@@ -89,7 +89,7 @@ struct SignUpView: View {
                 
                 // Apple Sign-In Button
                 Button(action: {
-                    print("Apple Sign-In Clicked 🍏")
+                    print("Apple Sign-In Clicked")
                 }) {
                     HStack {
                         Image(systemName: "applelogo")
@@ -126,15 +126,15 @@ struct SignUpView: View {
         withAnimation {
             if fullName.isEmpty || email.isEmpty || password.isEmpty {
                 showError = true
-                errorMessage = "⚠️ Please fill all fields!"
+                errorMessage = "Please fill all fields!"
             } else if !agreedToTerms {
                 showError = true
-                errorMessage = "⚠️ You must accept the terms!"
+                errorMessage = "You must accept the terms!"
             } else {
                 showError = false
-                print("✅ Sign Up Successful for \(fullName)")
+                print("Sign Up Successful for \(fullName)")
                 
-                // ✅ Navigate to Login Screen after sign-up
+                // Navigate to Login Screen after sign-up
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     self.presentationMode.wrappedValue.dismiss()
                 }

@@ -7,6 +7,7 @@
 import SwiftUI
 
 struct LoginView: View {
+    @State private var fullName = ""
     @State private var email = ""
     @State private var password = ""
     @State private var showError = false
@@ -55,7 +56,7 @@ struct LoginView: View {
                             .transition(.opacity)
                     }
 
-                    // ✅ Login Button (Passes User Email to ProfileView)
+                    // Login Button (Passes User Email to ProfileView)
                     Button(action: {
                         handleLogin()
                     }) {
@@ -71,7 +72,7 @@ struct LoginView: View {
 
                     // Navigation to ProfileView (Activated on Login)
                     NavigationLink(
-                        destination: ProfileView(userEmail: loggedInUser),
+                        destination: ProfileView(userEmail: loggedInUser, userName: fullName),
                         isActive: $isLoggedIn
                     ) {
                         EmptyView()
@@ -93,7 +94,7 @@ struct LoginView: View {
 
                     // Apple Sign-In Button
                     Button(action: {
-                        print("Apple Sign-In Clicked 🍏")
+                        print("Apple Sign-In Clicked")
                     }) {
                         HStack {
                             Image(systemName: "applelogo")
@@ -131,12 +132,12 @@ struct LoginView: View {
         withAnimation {
             if email.isEmpty || password.isEmpty {
                 showError = true
-                errorMessage = "⚠️ Please enter email & password!"
+                errorMessage = "Please enter email & password!"
             } else {
                 showError = false
-                loggedInUser = email // ✅ Store Logged-in User
+                loggedInUser = email // Store Logged-in User
 
-                // ✅ Navigate to ProfileView
+                // Navigate to ProfileView
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     isLoggedIn = true
                 }

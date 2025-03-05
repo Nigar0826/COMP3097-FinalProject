@@ -8,56 +8,75 @@
 import SwiftUI
 
 struct ProfileView: View {
-    var userEmail: String // ✅ Receives User Email
+    var userEmail: String
+    var userName: String
+    @State private var navigateToLogin = false
 
     var body: some View {
         ZStack {
-            Color.black.edgesIgnoringSafeArea(.all)
+            Color.black.ignoresSafeArea()
 
             VStack(spacing: 20) {
-                // Profile Header
-                Text("👤 User Profile")
-                    .foregroundColor(.yellow)
-                    .font(.largeTitle)
-                    .bold()
+                // User Profile Header
+                HStack {
+                    Image(systemName: "person.circle.fill")
+                        .font(.largeTitle)
+                        .foregroundColor(.yellow)
 
-                // User Email Display
-                Text("📧 Logged in as:")
-                    .foregroundColor(.white)
-                    .font(.headline)
+                    Text("\(userName)'s Profile")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(.yellow)
+                }
 
-                Text(userEmail)
-                    .foregroundColor(.yellow)
-                    .font(.title2)
-                    .bold()
+                // User Info
+                VStack(spacing: 10) {
+                    HStack {
+                        Image(systemName: "person.fill")
+                            .foregroundColor(.white)
+                        Text("Name: \(userName)")
+                            .font(.title3)
+                            .foregroundColor(.white)
+                    }
+
+                    HStack {
+                        Image(systemName: "envelope.fill")
+                            .foregroundColor(.yellow)
+                        Text("Email: \(userEmail)")
+                            .font(.title3)
+                            .foregroundColor(.yellow)
+                    }
+                }
+                .padding()
 
                 Spacer()
 
                 // Logout Button
-                Button(action: {
-                    print("User logged out 🔄")
-                }) {
+                Button(action: handleLogout) {
                     Text("Log Out")
                         .frame(maxWidth: .infinity, minHeight: 50)
                         .background(Color.red)
                         .foregroundColor(.white)
                         .cornerRadius(10)
                         .font(.headline)
-                        .shadow(radius: 5)
+                        .padding(.horizontal)
                 }
-                .padding(.horizontal)
 
                 Spacer()
             }
             .padding()
         }
+        .navigationBarBackButtonHidden(true)
+        .fullScreenCover(isPresented: $navigateToLogin) {
+            LoginView()
+        }
     }
-}
 
-// MARK: - Preview
-struct ProfileView_Previews: PreviewProvider {
-    static var previews: some View {
-        ProfileView(userEmail: "example@email.com")
+    // Logout Function: Navigates back to LoginView
+    func handleLogout() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            navigateToLogin = true
+        }
     }
 }
 
