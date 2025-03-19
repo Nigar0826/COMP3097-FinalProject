@@ -6,17 +6,17 @@
 //
 import SwiftUI
 
+// Login screen for the Advanced To-Do App
 struct LoginView: View {
-    @State private var fullName = ""
     @State private var email = ""
     @State private var password = ""
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var isLoggedIn = false
-    @State private var loggedInUser: String = ""
+    @State private var fullName: String = ""
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 Color.black.edgesIgnoringSafeArea(.all)
 
@@ -27,19 +27,17 @@ struct LoginView: View {
                         .font(.headline)
                         .padding(.top, 20)
 
-                    // Welcome Text
+                    // Welcome message
                     Text("WELCOME")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
 
-                    // Email Input
+                    // Email and password input fields
                     CustomTextField(icon: "envelope.fill", placeholder: "Email Address", text: $email)
-
-                    // Password Input
                     CustomTextField(icon: "lock.fill", placeholder: "Password", text: $password, isSecure: true)
 
-                    // Forgot Password Link
+                    // Forgot password link
                     HStack {
                         Spacer()
                         Text("Forgot Password?")
@@ -48,7 +46,7 @@ struct LoginView: View {
                             .padding(.trailing, 10)
                     }
 
-                    // Error Message Display
+                    // Error message display
                     if showError {
                         Text(errorMessage)
                             .foregroundColor(.red)
@@ -56,10 +54,8 @@ struct LoginView: View {
                             .transition(.opacity)
                     }
 
-                    // Login Button (Passes User Email to ProfileView)
-                    Button(action: {
-                        handleLogin()
-                    }) {
+                    // Login button
+                    Button(action: handleLogin) {
                         Text("Log In")
                             .frame(maxWidth: .infinity, minHeight: 50)
                             .background(Color.yellow)
@@ -70,32 +66,18 @@ struct LoginView: View {
                     }
                     .padding(.horizontal)
 
-                    // Navigation to ProfileView (Activated on Login)
-                    NavigationLink(
-                        destination: ProfileView(userEmail: loggedInUser, userName: fullName),
-                        isActive: $isLoggedIn
-                    ) {
-                        EmptyView()
-                    }
-
-                    // Divider with "Or continue with"
+                    // Divider with alternative login option
                     HStack {
-                        Rectangle()
-                            .frame(height: 1)
-                            .foregroundColor(.gray)
+                        Rectangle().frame(height: 1).foregroundColor(.gray)
                         Text("Or continue with")
                             .foregroundColor(.gray)
                             .font(.system(size: 14))
-                        Rectangle()
-                            .frame(height: 1)
-                            .foregroundColor(.gray)
+                        Rectangle().frame(height: 1).foregroundColor(.gray)
                     }
                     .padding(.horizontal)
 
-                    // Apple Sign-In Button
-                    Button(action: {
-                        print("Apple Sign-In Clicked")
-                    }) {
+                    // Apple Sign-In button
+                    Button(action: { print("Apple Sign-In Clicked") }) {
                         HStack {
                             Image(systemName: "applelogo")
                             Text("Sign in with Apple")
@@ -109,11 +91,10 @@ struct LoginView: View {
                         .shadow(radius: 5)
                     }
 
-                    // Sign Up Navigation
+                    // Sign-up navigation link
                     HStack {
                         Text("Don't have an account?")
                             .foregroundColor(.white)
-
                         NavigationLink(destination: SignUpView()) {
                             Text("Sign Up")
                                 .foregroundColor(.yellow)
@@ -124,10 +105,14 @@ struct LoginView: View {
                 }
                 .padding()
             }
+            .navigationBarBackButtonHidden(true) // Hide the default Back button
+            .navigationDestination(isPresented: $isLoggedIn) {
+                ProfileView() // Navigate to ProfileView on successful login
+            }
         }
     }
 
-    // MARK: - Login Handler (Navigates to ProfileView)
+    // Handles login process
     func handleLogin() {
         withAnimation {
             if email.isEmpty || password.isEmpty {
@@ -135,55 +120,15 @@ struct LoginView: View {
                 errorMessage = "Please enter email & password!"
             } else {
                 showError = false
-                loggedInUser = email // Store Logged-in User
-
-                // Navigate to ProfileView
+                if let savedName = UserDefaults.standard.string(forKey: "fullName") {
+                    fullName = savedName
+                } else {
+                    fullName = "Unknown User"
+                }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     isLoggedIn = true
                 }
             }
         }
-    }
-}
-
-// MARK: - Reusable Text Field Component
-struct CustomTextField: View {
-    var icon: String
-    var placeholder: String
-    @Binding var text: String
-    var isSecure: Bool = false
-
-    var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .foregroundColor(.yellow)
-                .padding(.leading, 10)
-
-            if isSecure {
-                SecureField(placeholder, text: $text)
-                    .padding()
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(10)
-                    .foregroundColor(.white)
-            } else {
-                TextField(placeholder, text: $text)
-                    .padding()
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(10)
-                    .foregroundColor(.white)
-            }
-        }
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.yellow, lineWidth: 1)
-        )
-        .padding(.horizontal)
-    }
-}
-
-// MARK: - Preview
-struct LoginView_Previews: PreviewProvider {
-    static var previews: some View {
-        LoginView()
     }
 }

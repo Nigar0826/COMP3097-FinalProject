@@ -7,20 +7,22 @@
 
 import SwiftUI
 
+// Profile screen displaying user information
 struct ProfileView: View {
-    var userEmail: String
-    var userName: String
+    @State private var userName: String = UserDefaults.standard.string(forKey: "fullName") ?? "Unknown User"
+    @State private var userEmail: String = UserDefaults.standard.string(forKey: "userEmail") ?? "No Email"
     @State private var navigateToLogin = false
+    @Environment(\.presentationMode) var presentationMode // Allows back navigation
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
 
             VStack(spacing: 20) {
-                // User Profile Header
-                HStack {
-                    Image(systemName: "person.circle.fill")
-                        .font(.largeTitle)
+                // Profile header with icon and user name
+                VStack {
+                    Image(systemName: "person.crop.circle.badge.checkmark")
+                        .font(.system(size: 60))
                         .foregroundColor(.yellow)
 
                     Text("\(userName)'s Profile")
@@ -29,7 +31,7 @@ struct ProfileView: View {
                         .foregroundColor(.yellow)
                 }
 
-                // User Info
+                // Display user details
                 VStack(spacing: 10) {
                     HStack {
                         Image(systemName: "person.fill")
@@ -51,7 +53,7 @@ struct ProfileView: View {
 
                 Spacer()
 
-                // Logout Button
+                // Logout button
                 Button(action: handleLogout) {
                     Text("Log Out")
                         .frame(maxWidth: .infinity, minHeight: 50)
@@ -66,17 +68,22 @@ struct ProfileView: View {
             }
             .padding()
         }
-        .navigationBarBackButtonHidden(true)
-        .fullScreenCover(isPresented: $navigateToLogin) {
-            LoginView()
+        .navigationBarBackButtonHidden(true) // Hides the default back button
+                .navigationDestination(isPresented: $navigateToLogin) {
+                    LoginView() // Navigate to login after logout
+                }
+            }
+
+
+    // Logout Functionality
+        func handleLogout() {
+            // Clear stored user data
+            UserDefaults.standard.removeObject(forKey: "fullName")
+            UserDefaults.standard.removeObject(forKey: "userEmail")
+
+            // Navigate back to LoginView
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                navigateToLogin = true
+            }
         }
     }
-
-    // Logout Function: Navigates back to LoginView
-    func handleLogout() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            navigateToLogin = true
-        }
-    }
-}
-
