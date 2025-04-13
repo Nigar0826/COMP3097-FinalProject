@@ -1,88 +1,198 @@
 //
 //  DashboardView.swift
 //  AdvancedToDoApp
-//
-//  Created by Luilson Sousa on 2025-03-03.
-//
+
 
 import SwiftUI
 
+// Dashboard screen for displaying and managing all user tasks.
+// Tasks are shown in a list, with toggle for filtering by completion status.
+// Tasks can be deleted or tapped to view/edit in TaskDetailView.
+// Includes a button to add new tasks.
 struct DashboardView: View {
-    @State private var selectedCategory: String = "All"
-    @State private var showTaskCreationView = false // Controls Task Creation Screen
-    let categories = ["All", "Completed", "Pending"]
+    // Core Data Context
+    @Environment(\.managedObjectContext) private var viewContext
 
-    // Change tasks to a dynamic list
-    @State private var tasks: [TaskModel] = [
-        TaskModel(title: "Buy groceries", status: "Completed", dueDate: Date(), priority: "Medium", category: "Personal"),
-        TaskModel(title: "Finish project report", status: "Pending", dueDate: Date(), priority: "High", category: "Work")
-    ]
+    // Fetch all tasks sorted by due date
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \TaskEntity.dueDate, ascending: true)],
+        animation: .default
+    )
+    private var tasks: FetchedResults<TaskEntity>
 
-    var filteredTasks: [TaskModel] {
-        if selectedCategory == "All" {
-            return tasks
-        } else {
-            return tasks.filter { $0.status == selectedCategory }
-        }
-    }
+    // State Variables
+    @State private var showCompletedOnly = false
+    @State private var showAddTask = false
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
-                Color.black.edgesIgnoringSafeArea(.all)
+                Color.black.ignoresSafeArea()
 
                 VStack {
-                    // Category Picker
-                    Picker("Filter", selection: $selectedCategory) {
-                        ForEach(categories, id: \.self) { category in
-                            Text(category)
-                        }
+                    // Completion Filter Toggle
+                    HStack {
+                        Text("Show Completed Only")
+                            .foregroundColor(.white)
+                            .font(.headline)
+
+                        Spacer()
+
+                        Toggle("", isOn: $showCompletedOnly)
+                            .toggleStyle(SwitchToggleStyle(tint: .yellow))
+                            .labelsHidden()
+                            .background(Color.white)
+                            .clipShape(Capsule())
                     }
-                    .pickerStyle(SegmentedPickerStyle())
-                    .padding()
+                    .padding(.horizontal)
+                    .padding(.top, 8)
 
                     // Task List
-                    List(filteredTasks) { task in
-                        NavigationLink(destination: TaskDetailView(task: task)) {
-                            HStack {
-                                Text(task.title)
-                                    .foregroundColor(.white)
-                                Spacer()
-                                Text(task.status)
-                                    .foregroundColor(task.status == "Completed" ? .green : .yellow)
+                    List {
+                        if filteredTasks.isEmpty {
+                            Text("No tasks found.")
+                                .foregroundColor(.gray)
+                                .italic()
+                                .listRowBackground(Color.black)
+                        } else {
+                            // List of filtered tasks
+                            ForEach(filteredTasks) { task in
+                                NavigationLink(destination: TaskDetailView(task: task)) {
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        // Title
+                                        Text(task.title ?? "Untitled Task")
+                                            .font(.headline)
+                                            .foregroundColor(.white)
+
+                                        // Due date
+                                        Text("Due: \(formattedDate(task.dueDate))")
+                                            .font(.subheadline)
+                                            .foregroundColor(.white.opacity(0.8))
+
+                                        // Priority and type
+                                        HStack {
+                                            Text("Priority: \(task.priority ?? "-")")
+                                            Spacer()
+                                            Text(task.taskType ?? "-")
+                                        }
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+
+                                        // Status indicators
+                                        HStack {
+                                            Text(task.isCompleted ? "✓ Completed" : "• Incomplete")
+                                                .font(.caption)
+                                                .foregroundColor(task.isCompleted ? .green : .red)
+
+                                            Spacer()
+
+                                            if isOverdue(task.dueDate) {
+                                                Text("Overdue")
+                                                    .font(.caption)
+                                                    .foregroundColor(.red)
+                                                    .bold()
+                                            } else if isDueSoon(task.dueDate) {
+                                                Text("Due Soon")
+                                                    .font(.caption)
+                                                    .foregroundColor(.orange)
+                                                    .bold()
+                                            }
+                                        }
+                                    }
+                                    .padding(.vertical, 4)
+                                }
+                                .listRowBackground(Color.black)
                             }
+                            .onDelete(perform: deleteTasks)  // Swipe to delete
                         }
-                        .listRowBackground(Color.black)
                     }
                     .scrollContentBackground(.hidden)
+                    .background(Color.black)
 
-                    Spacer()
-
-                    // Floating Add Task Button
-                    HStack {
-                        Spacer()
-                        Button(action: {
-                            showTaskCreationView = true // Open Task Creation Screen
-                        }) {
-                            Image(systemName: "plus")
-                                .font(.title)
-                                .padding()
-                                .background(Color.yellow)
-                                .clipShape(Circle())
-                        }
-                        .padding()
+                    // Add Task Button
+                    Button(action: { showAddTask = true }) {
+                        Label("Add Task", systemImage: "plus")
+                            .frame(maxWidth: .infinity, minHeight: 50)
+                            .background(Color.yellow)
+                            .foregroundColor(.black)
+                            .cornerRadius(10)
+                            .font(.headline)
+                            .padding()
                     }
                 }
             }
-            .navigationTitle("Task Dashboard")
-            .foregroundColor(.white)
-            .sheet(isPresented: $showTaskCreationView) { // Show Task Creation Screen
-                TaskCreationView(onSave: { newTask in
-                    tasks.append(newTask) // Add new task to list
-                })
+            .navigationTitle("Tasks")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Color.black, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            // Present task creation sheet
+            .sheet(isPresented: $showAddTask) {
+                TaskCreationView()
+                    .environment(\.managedObjectContext, viewContext)
             }
         }
     }
+
+    // Task Filtering
+    var filteredTasks: [TaskEntity] {
+        showCompletedOnly ? tasks.filter { $0.isCompleted } : Array(tasks)
+    }
+
+    // Task Deletion
+    func deleteTasks(offsets: IndexSet) {
+        withAnimation {
+            offsets.map { filteredTasks[$0] }.forEach(viewContext.delete)
+            do {
+                try viewContext.save()
+            } catch {
+                print("Failed to delete task: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    // Task Deletion
+    func formattedDate(_ date: Date?) -> String {
+        guard let date = date else { return "-" }
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+
+    // Overdue Checker
+    func isOverdue(_ date: Date?) -> Bool {
+        guard let due = date else { return false }
+        return due < Date()
+    }
+
+    // Due Soon Checker (next 24 hours)
+    func isDueSoon(_ date: Date?) -> Bool {
+        guard let due = date else { return false }
+        let now = Date()
+        let oneDayAhead = Calendar.current.date(byAdding: .hour, value: 24, to: now)!
+        return due >= now && due <= oneDayAhead
+    }
 }
 
-
+// Custom toggle style for ON = yellow, OFF = white background
+struct CustomToggleStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack {
+            configuration.label
+            Spacer()
+            RoundedRectangle(cornerRadius: 20)
+                .fill(configuration.isOn ? Color.yellow : Color.white)
+                .frame(width: 50, height: 30)
+                .overlay(
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 26, height: 26)
+                        .offset(x: configuration.isOn ? 10 : -10)
+                        .animation(.easeInOut(duration: 0.2), value: configuration.isOn)
+                )
+                .onTapGesture {
+                    configuration.isOn.toggle()
+                }
+        }
+    }
+}
