@@ -2,116 +2,135 @@
 //  TaskCreationView.swift
 //  AdvancedToDoApp
 //
-//  Created by Luilson Sousa on 2025-03-03.
-//
+
 
 import SwiftUI
 
+// TaskCreationView allows users to add a new task with title, description, due date,
+// priority, type, and completion status. Data is saved to Core Data.
 struct TaskCreationView: View {
-    @State private var title: String = ""
-    @State private var selectedCategory: String = "Work"
-    @State private var dueDate: Date = Date()
-    @State private var priority: String = "Medium"
-    @Environment(\.presentationMode) var presentationMode // To dismiss view
+    // Environment
+    @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.dismiss) private var dismiss
 
-    let categories = ["Work", "Personal", "Health", "Others"]
+    // Task Form Fields
+    @State private var title = ""
+    @State private var descriptionText = ""
+    @State private var dueDate = Date()
+    @State private var priority = "Medium"
+    @State private var taskType = "Personal"
+    @State private var isCompleted = false
+
+    // Static Options
     let priorities = ["Low", "Medium", "High"]
-
-    var onSave: (TaskModel) -> Void // Callback to send task back
+    let taskTypes = ["Personal", "Work", "Study"]
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
-                Color.black.edgesIgnoringSafeArea(.all)
+                Color.black.ignoresSafeArea()
+                    .edgesIgnoringSafeArea(.top)
 
-                VStack(spacing: 20) {
-                    // Task Title Input
-                    TextField("Enter Task Title", text: $title)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding()
-                        .background(Color.white.opacity(0.2))
-                        .cornerRadius(10)
-                        .foregroundColor(.white)
+                VStack(alignment: .leading, spacing: 20) {
+                    // Title
+                    Text("Add New Task")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(.yellow)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top)
 
-                    // Category Picker
-                    VStack(alignment: .leading) {
-                        Text("Category")
-                            .foregroundColor(.yellow)
-                        Picker("Category", selection: $selectedCategory) {
-                            ForEach(categories, id: \.self) { category in
-                                Text(category)
-                            }
-                        }
-                        .pickerStyle(MenuPickerStyle())
-                        .frame(maxWidth: .infinity)
-                        .background(Color.white.opacity(0.2))
-                        .cornerRadius(10)
-                    }
-                    .padding(.horizontal)
-
-                    // Due Date Picker
-                    VStack(alignment: .leading) {
-                        Text("Due Date")
-                            .foregroundColor(.yellow)
-                        DatePicker("Select Date", selection: $dueDate, displayedComponents: .date)
-                            .datePickerStyle(GraphicalDatePickerStyle())
-                            .background(Color.white.opacity(0.2))
-                            .cornerRadius(10)
-                    }
-                    .padding(.horizontal)
-
-                    // Priority Picker
-                    VStack(alignment: .leading) {
-                        Text("Priority")
-                            .foregroundColor(.yellow)
-                        Picker("Priority", selection: $priority) {
-                            ForEach(priorities, id: \.self) { priority in
-                                Text(priority)
-                            }
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
+                    // Title & Description Inputs
+                    Group {
+                        TextField("Title", text: $title)
+                        TextField("Description", text: $descriptionText)
                     }
                     .padding()
+                    .background(Color.white)
+                    .cornerRadius(10)
+
+                    // Due Date Picker
+                    DatePicker("Due Date", selection: $dueDate, displayedComponents: [.date, .hourAndMinute])
+                        .colorScheme(.dark)
+                        .foregroundColor(.white)
+
+                    // Priority Picker
+                    Picker("Priority", selection: $priority) {
+                        ForEach(priorities, id: \.self) {
+                            Text($0)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .foregroundColor(.white)
+
+                    // Task Type Picker
+                    Picker("Task Type", selection: $taskType) {
+                        ForEach(taskTypes, id: \.self) {
+                            Text($0)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .foregroundColor(.white)
+
+                    // Completion Toggle
+                    HStack {
+                        Text("Completed")
+                            .foregroundColor(.white)
+                            .font(.headline)
+
+                        Spacer()
+
+                        Toggle("", isOn: $isCompleted)
+                            .toggleStyle(SwitchToggleStyle(tint: Color.yellow))
+                            .labelsHidden()
+                            .background(Color.white)
+                            .clipShape(Capsule())
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 10)
 
                     // Save Task Button
                     Button(action: saveTask) {
                         Text("Save Task")
                             .frame(maxWidth: .infinity, minHeight: 50)
-                            .background(Color.green)
-                            .foregroundColor(.white)
+                            .background(Color.yellow)
+                            .foregroundColor(.black)
                             .cornerRadius(10)
                             .font(.headline)
                     }
-                    .padding(.horizontal)
 
                     Spacer()
                 }
                 .padding()
             }
-            .navigationTitle("New Task")
-            .foregroundColor(.white)
+            // Custom Back Button
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "chevron.left")
+                        Text("Back")
+                    }
+                    .foregroundColor(.yellow)
+                }
+            }
         }
     }
 
-    // MARK: - Save Task Functionality
+    // Save Task to Core Data
     func saveTask() {
-        let newTask = TaskModel(
-            title: title,
-            status: "Pending",
-            dueDate: dueDate,
-            priority: priority,
-            category: selectedCategory
-        )
-        onSave(newTask) // Send task back to Dashboard
-        presentationMode.wrappedValue.dismiss() // Dismiss after saving
+        let newTask = TaskEntity(context: viewContext)
+        newTask.title = title
+        newTask.descriptionText = descriptionText
+        newTask.dueDate = dueDate
+        newTask.priority = priority
+        newTask.taskType = taskType
+        newTask.isCompleted = isCompleted
+
+        do {
+            try viewContext.save()
+            dismiss()  // Dismiss view after saving
+        } catch {
+            print("Failed to save task: \(error.localizedDescription)")
+        }
     }
 }
-
-// Preview
-struct TaskCreationView_Previews: PreviewProvider {
-    static var previews: some View {
-        TaskCreationView(onSave: { _ in })
-    }
-}
-
-
