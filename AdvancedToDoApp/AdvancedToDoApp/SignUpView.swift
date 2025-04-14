@@ -9,6 +9,7 @@ import SwiftUI
 
 // Sign-up screen for new users
 struct SignUpView: View {
+    // State Variables
     @State private var fullName = ""
     @State private var email = ""
     @State private var password = ""
@@ -20,23 +21,23 @@ struct SignUpView: View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
             
+            // Sign-up form
             VStack(spacing: 20) {
-                // App title
-                Text("🚀 ADVANCED TO DO APP")
-                    .foregroundColor(.white)
-                    .font(.headline)
-                    .padding(.top, 20)
-                
-                // Sign-up heading
+                // Heading
                 Text("Create your account")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                 
                 // Input fields for sign-up
-                CustomTextField(icon: "person.fill", placeholder: "Full Name", text: $fullName)
-                CustomTextField(icon: "envelope.fill", placeholder: "Email Address", text: $email)
-                CustomTextField(icon: "lock.fill", placeholder: "Password", text: $password, isSecure: true)
+                CustomTextField(placeholder: "Full Name", text: $fullName)
+                    .frame(maxWidth: 340)
+                            
+                CustomTextField(placeholder: "Email Address", text: $email)
+                    .frame(maxWidth: 340)
+                            
+                CustomTextField(placeholder: "Password", text: $password, isSecure: true)
+                    .frame(maxWidth: 340)
                 
                 // Display error message if sign-up fails
                 if showError {
@@ -48,7 +49,7 @@ struct SignUpView: View {
                 
                 // Sign-up button
                 Button(action: handleSignUp) {
-                    Text("Sign Up 🎉")
+                    Text("Sign Up")
                         .frame(maxWidth: .infinity, minHeight: 50)
                         .background(Color.yellow)
                         .foregroundColor(.black)
@@ -60,19 +61,21 @@ struct SignUpView: View {
             }
             .padding()
         }
-        .navigationBarBackButtonHidden(true) // Hide the default Back button
-        .navigationDestination(isPresented: $isSignedUp) {
-            LoginView() // Navigate to login after sign-up
+        // Navigation Handling
+        .navigationBarBackButtonHidden(true) 
+        .fullScreenCover(isPresented: $isSignedUp) {
+            LoginView()  // Navigate to LoginView after successful sign-up
         }
     }
 
-    // Handles sign-up process
+    // Sign-Up Logic
     func handleSignUp() {
         if fullName.isEmpty || email.isEmpty || password.isEmpty {
             showError = true
             errorMessage = "All fields are required!"
         } else {
             showError = false
+            
             // Save user details in UserDefaults
             UserDefaults.standard.set(fullName, forKey: "fullName")
             UserDefaults.standard.set(email, forKey: "userEmail")

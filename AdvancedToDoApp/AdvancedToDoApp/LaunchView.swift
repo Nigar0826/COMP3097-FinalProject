@@ -7,28 +7,38 @@
 
 import SwiftUI
 
+// The initial launch screen of the PRIORITASK app.
+// Displays the app's branding and provides navigation to the login screen.
 struct LaunchView: View {
     var body: some View {
         NavigationView {
             VStack {
                 // App title
-                Text("ADVANCED TO DO")
+                Text("PRIORITASK")
+                    .foregroundColor(Color.yellow)
+                    .font(.title)
+                    .bold()
+                    .padding(.top, 220)
+                
+                // Subtitle
+                Text("ADVANCED TO DO APP")
                     .foregroundColor(.white)
-                    .font(.headline)
-                    .padding(.top, 40)
+                    .font(.title2)
+                    .bold()
+                    .padding(.top, 20)
 
                 Spacer()
 
                 // App tagline
-                Text("MANAGE YOUR TASK")
-                    .foregroundColor(.white)
+                Text("MANAGE YOUR TASKS")
+                    .foregroundColor(Color.yellow)
                     .font(.title)
                     .bold()
-                    .padding(.bottom, 10)
+                    .padding(.bottom, 40)
 
-                // Security Assurance
+                // Security Tagline
                 Text("SAFE & SECURE")
-                    .foregroundColor(Color.yellow)
+                    .foregroundColor(.white)
                     .font(.title2)
                     .bold()
                     .padding(.bottom, 40)
@@ -41,14 +51,13 @@ struct LaunchView: View {
                         .foregroundColor(.black)
                         .cornerRadius(10)
                 }
-                .padding(.bottom, 50)
+                .padding(.bottom, 200)
 
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.black) 
+            .background(Color.black)
             .ignoresSafeArea()
         }
     }
 }
-

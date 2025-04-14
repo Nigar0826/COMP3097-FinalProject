@@ -6,44 +6,45 @@
 //
 import SwiftUI
 
-// Login screen for the Advanced To-Do App
+// Login screen
 struct LoginView: View {
+    // State Variables
     @State private var email = ""
     @State private var password = ""
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var isLoggedIn = false
     @State private var fullName: String = ""
-
+    
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.black.edgesIgnoringSafeArea(.all)
-
+                
+                // Login Form
                 VStack(spacing: 20) {
-                    // App title
-                    Text("🚀 ADVANCED TO DO APP")
-                        .foregroundColor(.white)
-                        .font(.headline)
-                        .padding(.top, 20)
-
                     // Welcome message
                     Text("WELCOME")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
-
+                    
                     // Email and password input fields
-                    CustomTextField(icon: "envelope.fill", placeholder: "Email Address", text: $email)
-                    CustomTextField(icon: "lock.fill", placeholder: "Password", text: $password, isSecure: true)
-
+                    CustomTextField(placeholder: "Email Address", text: $email)
+                        .frame(maxWidth: 340)
+                       
+                    CustomTextField(placeholder: "Password", text: $password, isSecure: true)
+                        .frame(maxWidth: 340)
+                    
                     // Forgot password link
                     HStack {
                         Spacer()
-                        Text("Forgot Password?")
-                            .foregroundColor(.yellow)
-                            .font(.system(size: 14))
-                            .padding(.trailing, 10)
+                        NavigationLink(destination: ForgotPasswordView()) {
+                            Text("Forgot Password?")
+                                .foregroundColor(.yellow)
+                                .font(.system(size: 14))
+                        }
+                        .padding(.trailing, 10)
                     }
 
                     // Error message display
@@ -53,7 +54,7 @@ struct LoginView: View {
                             .font(.system(size: 14))
                             .transition(.opacity)
                     }
-
+                    
                     // Login button
                     Button(action: handleLogin) {
                         Text("Log In")
@@ -65,7 +66,7 @@ struct LoginView: View {
                             .shadow(radius: 5)
                     }
                     .padding(.horizontal)
-
+                    
                     // Divider with alternative login option
                     HStack {
                         Rectangle().frame(height: 1).foregroundColor(.gray)
@@ -75,7 +76,7 @@ struct LoginView: View {
                         Rectangle().frame(height: 1).foregroundColor(.gray)
                     }
                     .padding(.horizontal)
-
+                    
                     // Apple Sign-In button
                     Button(action: { print("Apple Sign-In Clicked") }) {
                         HStack {
@@ -90,7 +91,7 @@ struct LoginView: View {
                         .padding(.horizontal)
                         .shadow(radius: 5)
                     }
-
+                    
                     // Sign-up navigation link
                     HStack {
                         Text("Don't have an account?")
@@ -105,14 +106,14 @@ struct LoginView: View {
                 }
                 .padding()
             }
-            .navigationBarBackButtonHidden(true) // Hide the default Back button
-            .navigationDestination(isPresented: $isLoggedIn) {
-                ProfileView() // Navigate to ProfileView on successful login
+            .navigationBarBackButtonHidden(true)
+            .fullScreenCover(isPresented: $isLoggedIn) {
+                ProfileView()// Navigate to Profile on login
             }
         }
     }
-
-    // Handles login process
+    
+    // Login Logic
     func handleLogin() {
         withAnimation {
             if email.isEmpty || password.isEmpty {
@@ -120,11 +121,14 @@ struct LoginView: View {
                 errorMessage = "Please enter email & password!"
             } else {
                 showError = false
-                if let savedName = UserDefaults.standard.string(forKey: "fullName") {
-                    fullName = savedName
-                } else {
-                    fullName = "Unknown User"
-                }
+                
+                // Load user's full name from UserDefaults
+                fullName = UserDefaults.standard.string(forKey: "fullName") ?? "Unknown User"
+                
+                // Save login session email
+                UserDefaults.standard.set(email, forKey: "userEmail")
+                
+                // Navigate to profile screen after a short delay
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     isLoggedIn = true
                 }
